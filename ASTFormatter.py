@@ -95,18 +95,9 @@ class ASTFormatter(ast.NodeVisitor):
             operand = operand.op
         operand = type(operand)
         operator = type(operator)
-        print >> sys.stderr, "_parens: %s vs %s" % (
-                operand.__name__,
-                operator.__name__,
-            ),
         if operand in self._precedence and operator in self._precedence:
-            print >> sys.stderr, ": %d vs %d" % (
-                    self._precedence[operand],
-                    self._precedence[operator],
-                ),
             if self._precedence[operand] < self._precedence[operator]:
                 operand_str = "(%s)" % (operand_str,)
-        print >> sys.stderr, "= %s" % (repr(operand_str),)
         return operand_str
 
     ####################################################################
@@ -310,7 +301,7 @@ class ASTFormatter(ast.NodeVisitor):
                 ]
                 docstr_indent = min(docstr_indents)
                 docstring = docstring[0:1] + ["%*s%s" % (self.indent, "", ds[docstr_indent:]) for ds in docstring[1:]]
-            return '"""(docstring omitted"""'  # return '"""%s\n"""' % ("\n".join(docstring),)
+            return '"""%s\n"""' % ("\n".join(docstring),)
         else:
             return repr(node.s)
 
@@ -344,7 +335,9 @@ class ASTFormatter(ast.NodeVisitor):
     # of strings, all terminated with a `\n` newline.
 
     def visit_Assert(self, node):
-        if node.msg is not None:
+        if node.msg is None:
+            msg = ""
+        else:
             msg = "," + self.visit(node.msg)
         return "assert %s%s\n" % (self.visit(node.test), msg)
 
@@ -416,7 +409,12 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_If(self, node):
         content = ["if %s:\n" % (self.visit(node.test),)] + self.process_body(node.body, "    ")
         if node.orelse is not None and len(node.orelse) > 0:
-            content.extend(["else:\n"] + self.process_body(node.orelse, "    "))
+            if isinstance(node.orelse[0], ast.If):
+                orelse = self.process_body(node.orelse, "")
+                orelse[0] = "el" + orelse[0]
+            else:
+                orelse = ["else:\n"] + self.process_body(node.orelse, "    ")
+            content.extend(orelse)
         return content
 
     def visit_Import(self, node):
