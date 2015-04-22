@@ -22,11 +22,16 @@ class ASTFormatter(ast.NodeVisitor):
     ####################################################################
     # helper methods
 
+    def visit(self, node):
+        self.context.insert(0, node.__class__)
+        retval = super(ASTFormatter, self).visit(node)
+        self.context.pop(0)
+        return retval
+
     def process_body(self, stmtlist, indent=""):
         self.indent = len(indent)
         content = []
         for stmt in stmtlist:
-            self.context.insert(0, stmt.__class__)
             stmts = self.visit(stmt)
             if not isinstance(stmts, list):
                 stmts = [stmts]
@@ -288,7 +293,7 @@ class ASTFormatter(ast.NodeVisitor):
     re_docstr_remove_blank_back = re.compile(r'[ \n]*$')
     re_docstr_indent = re.compile(r'^( *).*')
     def visit_Str(self, node):
-        if self.context[0] == ast.Expr:
+        if self.context[1] == ast.Expr:
             # process docstring
             docstring = self.re_docstr_remove_blank_front.sub('',
                     self.re_docstr_remove_blank_back.sub('',
