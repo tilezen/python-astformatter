@@ -1,6 +1,19 @@
 '''
-Created on Apr 22, 2015
+The ASTFormatter class walks an AST tree and returns properly
+formatted Python source code that will parse to that same AST.
 
+Sample usage:
+
+    from ASTFormatter import ASTFormatter
+    import ast
+    
+    tree = ast.parse(open('modulefile.py'), 'modulefile.py', mode='exec')
+    src  = ASTFormatter.format(tree, mode='exec')
+    
+Original formatting and comments are lost in the parsing, and so cannot
+be regenerated.
+
+@version: 0.1.0
 @author: Johnson Earls
 '''
 
