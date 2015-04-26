@@ -6,7 +6,6 @@ Created on Apr 22, 2015
 
 import ast
 import re
-import sys
 
 __all__ = ('ASTFormatter',)
 
@@ -16,19 +15,54 @@ __all__ = ('ASTFormatter',)
 
 class ASTFormatter(ast.NodeVisitor):
     def __init__(self):
-        self.context = [ast.Module]
-        self.indent = 0
+        """Return a new ASTFormatter object."""
+        # initialize the context to empty; every call to format()
+        # will introduce a new context for that call, and every
+        # node visited will have that node pushed to the top of the
+        # stack and popped after the visitor returns.
+        self.context = []
+
+    def format(self, AST, mode='exec'):
+        """Accept an AST tree and return a properly formatted Python
+        expression or code block that compiles into that AST tree.
+        If mode is 'exec', treat the tree as if it were rooted at a
+        module; otherwise, for 'eval', treat it as if it were rooted
+        at an expr node.
+        """ 
+        if not isinstance(AST, ast.AST):
+            raise TypeError("ASTFormatter.format() expected AST got " + type(AST).__name__)
+        if mode == 'exec':
+            self.context.insert(0, ast.Module)
+        elif mode == 'eval':
+            self.context.insert(0, ast.expr)
+        else:
+            raise ValueError("ASTFormatter.format() expected either 'eval' or 'exec' for mode, got " + repr(mode))
+        formatted = "".join(self.visit(AST))
+        self.context.pop(0)
+        return formatted
 
     ####################################################################
     # helper methods
 
     def visit(self, node):
+        """Return the representation of the python source for `node`.
+        If `node` is an expression node, return a single string;
+        otherwise, return either a single newline-terminated string
+        or a list of newline-terminated strings.
+
+        FIXME: Only return lists of strings from non-expression nodes.
+        """
         self.context.insert(0, node.__class__)
         retval = super(ASTFormatter, self).visit(node)
         self.context.pop(0)
         return retval
 
-    def process_body(self, stmtlist, indent=""):
+    def __process_body(self, stmtlist, indent=""):
+        """Process a body block consisting of a list of statements
+        by visiting all the statements in the list, prepending an
+        optional indent to each statement, and returning the indented
+        block.
+        """
         self.indent = len(indent)
         content = []
         for stmt in stmtlist:
@@ -38,47 +72,23 @@ class ASTFormatter(ast.NodeVisitor):
             content += ["%s%s" % (indent, stmt) for stmt in stmts]
         return content
 
-    def process_child(self, nodelist):
-        if not isinstance(nodelist, (list, tuple)):
-            nodelist = [nodelist]
-        return [self.visit(node) for node in nodelist]
-
-    def flatten_one(self, deeplist):
-        retval = []
-        for item in deeplist:
-            if isinstance(item, list):
-                retval.extend(item)
-            else:
-                retval.append(item)
-        return retval
-
-    seenTypes = set()
-
     def generic_visit(self, node):
-        if type(node) not in self.seenTypes:
-            print >> sys.stderr, repr(node)
-            self.seenTypes.add(type(node))
-        try:
-            children = "(%s)" % (",".join(self.flatten_one([self.process_child(getattr(node, field)) for field in node._fields])),)
-        except AttributeError:
-            children = ""
-        if isinstance(node, ast.stmt):
-            return "#%s#%s\n" % (node.__class__.__name__, children)
-        # should be an expr at this point?
-        return "#%s#%s" % (node.__class__.__name__, children)
+        assert False, "ASTFormatter found an unknown node type " + type(node).__name__
 
     ####################################################################
     # precedence of expression operators/nodes.
     # each precedence is an integer, with higher values for
     # higher precedence operators.
-    
-    _precedence_list = (
+
+    # the __precedence_list is a list of tuples of node types, in order
+    # lowest priority to highest.  It is used to build the _precedence map.    
+    __precedence_list = (
         (ast.Lambda,),
         (ast.IfExp,),
         (ast.Or,),
         (ast.And,),
         (ast.Not,),
-        (ast.In, ast.NotIn, ast.Is, ast.IsNot, ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.NotEq, ast.Eq, ast.Compare, ),
+        (ast.In, ast.NotIn, ast.Is, ast.IsNot, ast.Lt, ast.LtE, ast.Gt, ast.GtE, ast.NotEq, ast.Eq, ast.Compare,),
         (ast.BitOr,),
         (ast.BitXor,),
         (ast.BitAnd,),
@@ -90,9 +100,20 @@ class ASTFormatter(ast.NodeVisitor):
         (ast.Subscript, ast.Slice, ast.Call, ast.Attribute,),
         (ast.Tuple, ast.List, ast.Dict, ast.Repr,),
     )
-    _precedence = dict([(j, i) for i in xrange(len(_precedence_list)) for j in _precedence_list[i]]);
+    
+    # _precedence maps node types to a precedence number; higher values
+    # mean higher precedence.  For example, ast.Mult and ast.Div will
+    # have higher precedence values thatn ast.Add and ast.Sub.
+    _precedence = dict([(j, i) for i in xrange(len(__precedence_list)) for j in __precedence_list[i]]);
 
-    def _parens(self, operand, operator):
+    # the __parens method accepts an operand and the operator which is
+    # operating on the operand.  if the operand's type has a lower
+    # precedence than the operator's type, the operand's formatted value
+    # will be returned in (parentheses); otherwise, the operand's value
+    # will be returned as is.  If operand is a BinOp or BoolOp node, the
+    # comparison is instead made against he operator encapsulted by the
+    # BinOp or BoolOp node.
+    def __parens(self, operand, operator):
         operand_str = self.visit(operand)
         if isinstance(operand, ast.BinOp):
             operand = operand.op
@@ -134,10 +155,10 @@ class ASTFormatter(ast.NodeVisitor):
         return "(%s)" % (",".join(args + defargs + vararg + kwarg),)
 
     def visit_Attribute(self, node):
-        return "%s.%s" % (self._parens(node.value, node), node.attr)
+        return "%s.%s" % (self.__parens(node.value, node), node.attr)
 
     def visit_BinOp(self, node):
-        return (" %s " % (self.visit(node.op),)).join([self._parens(operand, node.op) for operand in (node.left, node.right)])
+        return (" %s " % (self.visit(node.op),)).join([self.__parens(operand, node.op) for operand in (node.left, node.right)])
 
     def visit_BitAnd(self, node):
         return "&"
@@ -149,7 +170,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "^"
 
     def visit_BoolOp(self, node):
-        return (" %s " % (self.visit(node.op),)).join([self._parens(operand, node.op) for operand in node.values])
+        return (" %s " % (self.visit(node.op),)).join([self.__parens(operand, node.op) for operand in node.values])
 
     def visit_Call(self, node):
         args = [self.visit(arg) for arg in node.args]
@@ -177,6 +198,27 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_Div(self, node):
         return "/"
 
+    re_docstr_escape = re.compile(r'([\\"])')
+    re_docstr_remove_blank_front = re.compile(r'^[ \n]*')
+    re_docstr_remove_blank_back = re.compile(r'[ \n]*$')
+    re_docstr_indent = re.compile(r'^( *).*')
+    def visit_DocStr(self, node):
+        """an artificial visitor method, called by visit_Expr if its value is a string."""
+        docstring = self.re_docstr_remove_blank_front.sub('',
+                self.re_docstr_remove_blank_back.sub('',
+                        self.re_docstr_escape.sub(r'\\\1', node.s))).split('\n')
+        if len(docstring) > 1:
+            docstr_indents = [
+                len(self.re_docstr_indent.sub(r'\1', ds)) for ds in [
+                    ds.rstrip() for ds in docstring[1:]
+                ] if ds
+            ]
+            docstr_indent = min(docstr_indents)
+            docstring = ['"""%s\n' % (docstring[0],)] + ["%s\n" % (ds[docstr_indent:],) for ds in docstring[1:]] + ['"""\n']
+        else:
+            docstring = ['"""%s"""\n' % (docstring[0],)]
+        return docstring
+        
     def visit_Ellipsis(self, node):
         return "..."
 
@@ -288,27 +330,8 @@ class ASTFormatter(ast.NodeVisitor):
         else:
             return ":".join([lower, upper])
 
-    re_docstr_escape = re.compile(r'([\\"])')
-    re_docstr_remove_blank_front = re.compile(r'^[ \n]*')
-    re_docstr_remove_blank_back = re.compile(r'[ \n]*$')
-    re_docstr_indent = re.compile(r'^( *).*')
     def visit_Str(self, node):
-        if self.context[1] == ast.Expr:
-            # process docstring
-            docstring = self.re_docstr_remove_blank_front.sub('',
-                    self.re_docstr_remove_blank_back.sub('',
-                            self.re_docstr_escape.sub(r'\\\1', node.s))).split('\n')
-            if len(docstring) > 1:
-                docstr_indents = [
-                    len(self.re_docstr_indent.sub(r'\1', ds)) for ds in [
-                        ds.rstrip() for ds in docstring[1:]
-                    ] if ds
-                ]
-                docstr_indent = min(docstr_indents)
-                docstring = docstring[0:1] + ["%*s%s" % (self.indent, "", ds[docstr_indent:]) for ds in docstring[1:]]
-            return '"""%s\n"""' % ("\n".join(docstring),)
-        else:
-            return repr(node.s)
+        return repr(node.s)
 
     def visit_Sub(self, node):
         return "-"
@@ -363,7 +386,7 @@ class ASTFormatter(ast.NodeVisitor):
         else:
             supers = "(%s)" % (", ".join([self.visit(super_) for super_ in supers]))
         classdef = ["class %s%s:\n" % (node.name, supers)]
-        classbody = self.process_body(node.body, "    ")
+        classbody = self.__process_body(node.body, "    ")
         return decorators + classdef + classbody
 
     def visit_Continue(self, node):
@@ -374,10 +397,10 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_ExceptHandler(self, node):
         if not node.type:
-            return ["except:\n"] + self.process_body(node.body, "    ")
+            return ["except:\n"] + self.__process_body(node.body, "    ")
         if node.name:
-            return ["except %s,%s:\n" % (self.visit(node.type), self.visit(node.name))] + self.process_body(node.body, "    ")
-        return ["except %s:\n" % (self.visit(node.type),)] + self.process_body(node.body, "    ")
+            return ["except %s,%s:\n" % (self.visit(node.type), self.visit(node.name))] + self.__process_body(node.body, "    ")
+        return ["except %s:\n" % (self.visit(node.type),)] + self.__process_body(node.body, "    ")
 
     def visit_Exec(self, node):
         inglobals, inlocals = "", ""
@@ -388,48 +411,50 @@ class ASTFormatter(ast.NodeVisitor):
         return "exec %s%s%s\n" % (self.visit(node.body), inglobals, inlocals)
 
     def visit_Expr(self, node):
-        return self.visit(node.value) + "\n"
+        if isinstance(node.value, ast.Str):
+            return self.visit_DocStr(node.value)
+        return [ self.visit(node.value) + '\n' ]
 
     def visit_For(self, node):
         if node.orelse is None or len(node.orelse) == 0:
             orelse = []
         else:
-            orelse = ["else:\n"] + self.process_body(node.orelse, "    ")
+            orelse = ["else:\n"] + self.__process_body(node.orelse, "    ")
         return [
             "for %s in %s:\n" % (
                 self.visit(node.target),
                 self.visit(node.iter),
             )
-        ] + self.process_body(node.body, "    ") + orelse
+        ] + self.__process_body(node.body, "    ") + orelse
 
     def visit_FunctionDef(self, node):
         decorators = [self.visit(dec) for dec in node.decorator_list]
         funcdef = ["def %s%s:\n" % (node.name, self.visit(node.args))]
-        funcbody = self.process_body(node.body, "    ")
+        funcbody = self.__process_body(node.body, "    ")
         return decorators + funcdef + funcbody
 
     def visit_Global(self, node):
         return "global %s\n" % (",".join([self.visit(name) for name in node.names]),)
 
     def visit_If(self, node):
-        content = ["if %s:\n" % (self.visit(node.test),)] + self.process_body(node.body, "    ")
+        content = ["if %s:\n" % (self.visit(node.test),)] + self.__process_body(node.body, "    ")
         if node.orelse is not None and len(node.orelse) > 0:
             if isinstance(node.orelse[0], ast.If):
-                orelse = self.process_body(node.orelse, "")
+                orelse = self.__process_body(node.orelse, "")
                 orelse[0] = "el" + orelse[0]
             else:
-                orelse = ["else:\n"] + self.process_body(node.orelse, "    ")
+                orelse = ["else:\n"] + self.__process_body(node.orelse, "    ")
             content.extend(orelse)
         return content
 
     def visit_Import(self, node):
-        return "import %s\n" % (self.visit(node.names),)
+        return [ "import %s\n" % (self.visit(name),) for name in node.names ]
     
     def visit_ImportFrom(self, node):
         return "from %s import %s\n" % (node.module, ", ".join([self.visit(name) for name in node.names]),) 
 
     def visit_Module(self, node):
-        return self.process_body(node.body)
+        return self.__process_body(node.body)
 
     def visit_Pass(self, node):
         return "pass\n"
@@ -464,26 +489,26 @@ class ASTFormatter(ast.NodeVisitor):
         return "return\n"
 
     def visit_TryExcept(self, node):
-        retval = ["try:\n"] + self.process_body(node.body, "    ")
+        retval = ["try:\n"] + self.__process_body(node.body, "    ")
         for handler in node.handlers:
             retval.extend(self.visit(handler))
         if node.orelse is not None and len(node.orelse) > 0:
-            retval.extend(["else:\n"] + self.process_body(node.orelse, "    "))
+            retval.extend(["else:\n"] + self.__process_body(node.orelse, "    "))
         return retval
 
     def visit_TryFinally(self, node):
-        return ["try:\n"] + self.process_body(node.body, "    ") + ["finally:\n"] + self.process_body(node.finalbody, "    ")
+        return ["try:\n"] + self.__process_body(node.body, "    ") + ["finally:\n"] + self.__process_body(node.finalbody, "    ")
 
     def visit_While(self, node):
         if node.orelse is None or len(node.orelse) == 0:
             orelse = []
         else:
-            orelse = ["else:\n"] + self.process_body(node.orelse, "    ")
+            orelse = ["else:\n"] + self.__process_body(node.orelse, "    ")
         return [
             "while %s:\n" % (
                 self.visit(node.test),
             )
-        ] + self.process_body(node.body, "    ") + orelse
+        ] + self.__process_body(node.body, "    ") + orelse
 
     def visit_With(self, node):
         if node.optional_vars is None:
@@ -492,4 +517,13 @@ class ASTFormatter(ast.NodeVisitor):
             asvars = " as %s" % (self.visit(node.optional_vars),)
         return [
             "with %s%s:\n" % (self.visit(node.context_expr), asvars)
-        ] + self.process_body(node.body, "    ")
+        ] + self.__process_body(node.body, "    ")
+
+########################################################################
+# simple tests
+
+if __name__ == '__main__':
+    fmt = ASTFormatter()
+    import inspect
+    my_module = inspect.getfile(inspect.currentframe())
+    print fmt.format(ast.parse(open(my_module, 'rU').read(), my_module, mode='exec'))
