@@ -12,7 +12,7 @@ Example Usage
     import ast
     
     tree = ast.parse(open('modulefile.py'), 'modulefile.py', mode='exec')
-    src  = ASTFormatter.format(tree, mode='exec')
+    src  = ASTFormatter().format(tree, mode='exec')
 
 Bugs
 ----
