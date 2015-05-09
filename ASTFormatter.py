@@ -1,26 +1,45 @@
 '''
-The ASTFormatter class walks an AST tree and returns properly
-formatted Python source code that will parse to that same AST.
+ASTFormatter
+============
 
-Sample usage:
+The ASTFormatter class accepts an AST tree and returns a valid source code representation of that tree.
+
+Example Usage
+-------------
+
+::
 
     from ASTFormatter import ASTFormatter
     import ast
     
     tree = ast.parse(open('modulefile.py'), 'modulefile.py', mode='exec')
     src  = ASTFormatter.format(tree, mode='exec')
-    
-Original formatting and comments are lost in the parsing, and so cannot
-be regenerated.
 
-@version: 0.1.0
-@author: Johnson Earls
+Bugs
+----
+
+- Currently, indentation is fixed at 4 spaces.
+
+- Too many methods are exposed that shouldn't be, in order to properly subclass `ast.NodeVisitor`.
+
+- Need to make the statement visitor methods consistent about returning a list of strings; most still just return a string.
+
+- Not tested with Python 3.0 at all.
+
+Copyright
+---------
+
+Copyright |copy| 2015 by Johnson Earls.  Some rights reserved.  See the license for details.
+
+.. |copy| unicode:: 0xA9 .. copyright sign
 '''
 
 import ast
 import re
 
 __all__ = ('ASTFormatter',)
+
+__version__ = '0.2.0'
 
 ########################################################################
 # The ASTFormatter class walks an AST and produces properly formatted
