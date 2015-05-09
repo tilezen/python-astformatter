@@ -39,7 +39,7 @@ import re
 
 __all__ = ('ASTFormatter',)
 
-__version__ = '0.2.0'
+__version__ = '0.3.0'
 
 ########################################################################
 # The ASTFormatter class walks an AST and produces properly formatted
