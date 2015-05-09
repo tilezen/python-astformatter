@@ -296,7 +296,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "%s=%s" % (node.arg, self.visit(node.value))
 
     def visit_Lambda(self, node):
-        return "lambda %s:%s" % (self.visit(node.args), self.visit(node.body))
+        return "lambda %s: %s" % (self.visit(node.args)[1:-1], self.visit(node.body))
 
     def visit_List(self, node):
         return "[%s]" % (", ".join([self.visit(elt) for elt in node.elts]),)
@@ -312,7 +312,7 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_LtE(self, node):
         return "<="
 
-    def Visit_LShift(self, node):
+    def visit_LShift(self, node):
         return "<<"
 
     def visit_Mod(self, node):
@@ -343,7 +343,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "**"
 
     def visit_Repr(self, node):
-        return "repr(%s)" % (self.visit(node.value),)
+        return "`%s`" % (self.visit(node.value),)
 
     def visit_RShift(self, node):
         return ">>"
@@ -436,9 +436,9 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_Exec(self, node):
         inglobals, inlocals = "", ""
-        if self.inglobals is not None:
+        if node.globals is not None:
             inglobals = " in %s" % (self.visit(node.globals),)
-            if self.inlocals is not None:
+            if node.locals is not None:
                 inlocals = ", %s" % (self.visit(node.locals),)
         return "exec %s%s%s\n" % (self.visit(node.body), inglobals, inlocals)
 
@@ -466,7 +466,7 @@ class ASTFormatter(ast.NodeVisitor):
         return decorators + funcdef + funcbody
 
     def visit_Global(self, node):
-        return "global %s\n" % (",".join([self.visit(name) for name in node.names]),)
+        return "global %s\n" % (",".join(node.names),)
 
     def visit_If(self, node):
         content = ["if %s:\n" % (self.visit(node.test),)] + self.__process_body(node.body, "    ")
@@ -483,7 +483,7 @@ class ASTFormatter(ast.NodeVisitor):
         return [ "import %s\n" % (self.visit(name),) for name in node.names ]
     
     def visit_ImportFrom(self, node):
-        return "from %s import %s\n" % (node.module, ", ".join([self.visit(name) for name in node.names]),) 
+        return "from %s%s import %s\n" % ("." * node.level, node.module, ", ".join([self.visit(name) for name in node.names]),) 
 
     def visit_Module(self, node):
         return self.__process_body(node.body)
