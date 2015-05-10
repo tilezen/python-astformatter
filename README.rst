@@ -25,8 +25,6 @@ Bugs
 
 - Code modified to work with 3.x needs cleanup
 
-- not tested against 3.x structures that do not exist in 2.x
-
 Copyright
 ---------
 

@@ -26,8 +26,6 @@ Bugs
 
 - Code modified to work with 3.x needs cleanup
 
-- not tested against 3.x structures that do not exist in 2.x
-
 Copyright
 ---------
 
@@ -41,7 +39,7 @@ import re
 
 __all__ = ('ASTFormatter',)
 
-__version__ = '0.4.0'
+__version__ = '0.5.0'
 
 import sys
 # for sys.version
