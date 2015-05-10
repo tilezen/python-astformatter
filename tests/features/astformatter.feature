@@ -4,8 +4,7 @@ Feature: Generate proper Python code
     I want the ASTFormatter class to be able to generate proper
     Python code for any given AST tree.
 
-    @v2.6 @v2.7 @v3.4
-    Scenario Outline: AST structures common to 2.x and 3.x should work.
+    Scenario Outline: AST structures common to all versions of python should work
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
          then the output should include "<output snippet>".
@@ -100,8 +99,8 @@ Feature: Generate proper Python code
         | x <> y                                                | x != y                                                    |
         | `foo`                                                 | `foo`                                                     |
 
-    @v2.7 @v3.4
-    Scenario Outline: AST structures in 2.7+ and 3.4+ should work.
+    @v2.7 @v3.3 @v3.4
+    Scenario Outline: AST structures in 2.7+ and 3.3+ should work.
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
          then the output should include "<output snippet>".
@@ -122,8 +121,8 @@ Feature: Generate proper Python code
         | source input                                          | output snippet                                            |
         | with foo as x,bar as y:\n  pass                       | with foo as x, bar as y:\n    pass                        |
 
-    @v3.4
-    Scenario Outline: AST structures in 3.4+ should work.
+    @v3.3
+    Scenario Outline: AST structures in 3.3+ should work.
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
          then the output should include "<output snippet>".
@@ -137,7 +136,6 @@ Feature: Generate proper Python code
         | class foo(bar=baz): pass                              | class foo(bar=baz):\n    pass                             |
         | nonlocal foo,bar                                      | nonlocal foo,bar                                          |
 
-    @v2.6 @v2.7 @v3.4
     Scenario Outline: Operator precedence should be taken into account
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
