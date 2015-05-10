@@ -15,7 +15,7 @@ try:
     return s.decode('string_escape')
 except AttributeError:
   def decode_escapes(s):
-    return bytes(s).decode('string_escape')
+    return bytes(s, "utf-8").decode('string_escape')
 
 @given("I have parsed an AST tree from \"{source}\",")
 def given_a_source_input_of(context, source):
