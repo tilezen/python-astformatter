@@ -558,4 +558,4 @@ if __name__ == '__main__':
     fmt = ASTFormatter()
     import inspect
     my_module = inspect.getfile(inspect.currentframe())
-    print fmt.format(ast.parse(open(my_module, 'rU').read(), my_module, mode='exec'))
+    sys.out.write(fmt.format(ast.parse(open(my_module, 'rU').read(), my_module, mode='exec')))
