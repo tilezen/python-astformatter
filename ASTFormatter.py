@@ -354,7 +354,7 @@ class ASTFormatter(ast.NodeVisitor):
         return node.id
 
     def visit_NameConstant(self, node):
-        return node.value
+        return repr(node.value)
 
     def visit_Not(self, node):
         return "not"
