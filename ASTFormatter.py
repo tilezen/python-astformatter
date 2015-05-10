@@ -539,16 +539,22 @@ class ASTFormatter(ast.NodeVisitor):
             return "return %s\n" % (self.visit(node.value),)
         return "return\n"
 
-    def visit_TryExcept(self, node):
+    def visit_Try(self, node):
         retval = ["try:\n"] + self.__process_body(node.body, "    ")
-        for handler in node.handlers:
-            retval.extend(self.visit(handler))
-        if node.orelse is not None and len(node.orelse) > 0:
-            retval.extend(["else:\n"] + self.__process_body(node.orelse, "    "))
+        handlers = getattr(node, 'handlers', None)
+        if handlers is not None and len(handlers) > 0:
+            for handler in handlers:
+                retval.extend(self.visit(handler))
+        orelse = getattr(node, 'orelse', None)
+        if orelse is not None and len(orelse) > 0:
+            retval.extend(["else:\n"] + self.__process_body(orelse, "    "))
+        final = getattr(node, 'finalbody', None)
+        if final is not None:
+            retval.extend( ["finally:\n"] + self.__process_body(node.finalbody, "    ") )
         return retval
 
-    def visit_TryFinally(self, node):
-        return ["try:\n"] + self.__process_body(node.body, "    ") + ["finally:\n"] + self.__process_body(node.finalbody, "    ")
+    visit_TryExcept = visit_Try
+    visit_TryFinally = visit_Try
 
     def visit_While(self, node):
         if node.orelse is None or len(node.orelse) == 0:
@@ -562,13 +568,20 @@ class ASTFormatter(ast.NodeVisitor):
         ] + self.__process_body(node.body, "    ") + orelse
 
     def visit_With(self, node):
-        if node.optional_vars is None:
-            asvars = ""
+        if getattr(node, 'items',None) is not None:
+            asvars = ", ".join([self.visit(item) for item in node.items])
         else:
-            asvars = " as %s" % (self.visit(node.optional_vars),)
-        return [
-            "with %s%s:\n" % (self.visit(node.context_expr), asvars)
-        ] + self.__process_body(node.body, "    ")
+            if node.optional_vars is None:
+                asvars = self.visit(node.context_expr)
+            else:
+                asvars = "%s as %s" % (self.visit(node.context_expr), self.visit(node.optional_vars),)
+        if len(node.body) == 1 and isinstance(node.body[0], ast.With):
+            subwith = self.visit(node.body[0])
+            return [ "with %s, %s" % (asvars, subwith[0][5:]) ] + subwith[1:]
+        else:
+            return [
+                "with %s:\n" % (asvars,)
+            ] + self.__process_body(node.body, "    ")
 
 ########################################################################
 # simple tests
