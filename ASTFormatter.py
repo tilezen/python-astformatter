@@ -133,7 +133,7 @@ class ASTFormatter(ast.NodeVisitor):
         (ast.UAdd, ast.USub, ast.Invert,),
         (ast.Pow,),
         (ast.Subscript, ast.Slice, ast.Call, ast.Attribute,),
-        (ast.Tuple, ast.List, ast.Dict,) + (((sys.version[0] < 3) and (ast.Repr,)) or ()) ,
+        (ast.Tuple, ast.List, ast.Dict,) + (((sys.version_info[0] < 3) and (ast.Repr,)) or ()) ,
     )
     
     # _precedence maps node types to a precedence number; higher values
