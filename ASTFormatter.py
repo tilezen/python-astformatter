@@ -225,6 +225,9 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_BoolOp(self, node):
         return (" %s " % (self.visit(node.op),)).join([self.__parens(operand, node.op) for operand in node.values])
 
+    def visit_Bytes(self, node):
+        return repr(node.bytes)
+
     def visit_Call(self, node):
         args = [self.visit(arg) for arg in node.args]
         keywords = [self.visit(keyword) for keyword in node.keywords]
@@ -247,6 +250,11 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_Dict(self, node):
         return "{%s}" % (", ".join(["%s:%s" % (self.visit(key), self.visit(value)) for (key, value) in zip(node.keys, node.values)]),)
+
+    def visit_DictComp(self, node):
+        if node.generators:
+            return "{%s:%s %s}" % (self.visit(node.key), self.visit(node.value)," ".join(self.visit(generator) for generator in node.generators),)
+        return "{%s:%s}" % (self.visit(node.key), self.visit(node.value))
 
     def visit_Div(self, node):
         return "/"
@@ -345,6 +353,9 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_Name(self, node):
         return node.id
 
+    def visit_NameConstant(self, node):
+        return node.value
+
     def visit_Not(self, node):
         return "not"
 
@@ -369,6 +380,14 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_RShift(self, node):
         return ">>"
 
+    def visit_Set(self, node):
+        return "{%s}" % (", ".join(["%s" % (self.visit(elt),) for elt in node.elts]),)
+
+    def visit_SetComp(self, node):
+        if node.generators:
+            return "{%s %s}" % (self.visit(node.elt), " ".join(self.visit(generator) for generator in node.generators),)
+        return "{%s}" % (self.visit(node.elt),)
+
     def visit_Slice(self, node):
         if node.lower:
             lower = self.visit(node.lower)
@@ -382,6 +401,9 @@ class ASTFormatter(ast.NodeVisitor):
             return ":".join([lower, upper, self.visit(node.step)])
         else:
             return ":".join([lower, upper])
+
+    def visit_Starred(self, node):
+        return "*" + self.visit(node.value)
 
     def visit_Str(self, node):
         return repr(node.s)
@@ -417,6 +439,9 @@ class ASTFormatter(ast.NodeVisitor):
             return "yield %s" % (self.visit(node.value),)
         return "yield"
 
+    def visit_YieldFrom(self, node):
+        return "yield from %s" % (self.visit(node.value),)
+
     ####################################################################
     # statement methods - these return either a single string or a list
     # of strings, all terminated with a `\n` newline.
@@ -439,11 +464,19 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_ClassDef(self, node):
         decorators = [self.visit(dec) for dec in node.decorator_list]
-        supers = node.bases
-        if supers is None or len(supers) == 0:
-            supers = ""
+        supers = []
+        if node.bases is not None:
+            supers.extend([self.visit(base) for base in node.bases])
+        if node.keywords is not None:
+            supers.extend([self.visit(kw) for kw in node.keywords])
+        if node.starargs is not None:
+            supers.append("*" + self.visit(node.starargs))
+        if node.kwargs is not None:
+            supers.append("**" + self.visit(node.kwargs))
+        if len(supers):
+            supers = "(%s)" % (", ".join(supers))
         else:
-            supers = "(%s)" % (", ".join([self.visit(super_) for super_ in supers]))
+            supers = ""
         classdef = ["class %s%s:\n" % (node.name, supers)]
         classbody = self.__process_body(node.body, "    ")
         return decorators + classdef + classbody
@@ -522,6 +555,9 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_Module(self, node):
         return self.__process_body(node.body)
+
+    def visit_Nonlocal(self, node):
+        return "nonlocal %s\n" % (",".join(node.names),)
 
     def visit_Pass(self, node):
         return "pass\n"
