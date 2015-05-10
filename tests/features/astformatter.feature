@@ -67,7 +67,6 @@ Feature: Generate proper Python code
         | x is not y                                            | x is not y                                                |
         | x in y                                                | x in y                                                    |
         | x not in y                                            | x not in y                                                |
-        | foo(x, y=1, *z, **q)                                  | foo(x, y=1, *z, **q)                                      |
         | 123                                                   | 123                                                       |
         | foo = "foo"                                           | foo = 'foo'                                               |
         | foo = 'foo'                                           | foo = 'foo'                                               |
@@ -84,6 +83,16 @@ Feature: Generate proper Python code
         | True                                                  | True                                                      |
         | False                                                 | False                                                     |
 
+    @v2.6 @v2.7 @v3.3 @v3.4
+    Scenario Outline: AST structures in pre-3.5 python should work
+        Given I have parsed an AST tree from "<source input>",
+         when I transform the AST tree to source,
+         then the output should include "<output snippet>".
+
+    Examples:
+        | source input                                          | output snippet                                            |
+        | foo(x, y=1, *z, **q)                                  | foo(x, y=1, *z, **q)                                      |
+
     @v2.6 @v2.7
     Scenario Outline: AST structures in 2.6+ should work.
         Given I have parsed an AST tree from "<source input>",
@@ -99,7 +108,7 @@ Feature: Generate proper Python code
         | x <> y                                                | x != y                                                    |
         | `foo`                                                 | `foo`                                                     |
 
-    @v2.7 @v3.3 @v3.4
+    @v2.7 @v3.3 @v3.4 @v3.5
     Scenario Outline: AST structures in 2.7+ and 3.3+ should work.
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
@@ -121,7 +130,7 @@ Feature: Generate proper Python code
         | source input                                          | output snippet                                            |
         | with foo as x,bar as y:\n  pass                       | with foo as x, bar as y:\n    pass                        |
 
-    @v3.3
+    @v3.3 @v3.4 @v3.5
     Scenario Outline: AST structures in 3.3+ should work.
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
@@ -135,6 +144,16 @@ Feature: Generate proper Python code
         | *foo = bar                                            | *foo = bar                                                |
         | class foo(bar=baz): pass                              | class foo(bar=baz):\n    pass                             |
         | nonlocal foo,bar                                      | nonlocal foo,bar                                          |
+
+    @v3.5
+    Scenario Outline: AST structures in 3.5+ python should work
+        Given I have parsed an AST tree from "<source input>",
+         when I transform the AST tree to source,
+         then the output should include "<output snippet>".
+
+    Examples:
+        | source input                                          | output snippet                                            |
+        | foo(x, y=1, *z, **q)                                  | foo(x, *z, y=1, **q)                                      |
 
     Scenario Outline: Operator precedence should be taken into account
         Given I have parsed an AST tree from "<source input>",
