@@ -195,9 +195,10 @@ class ASTFormatter(ast.NodeVisitor):
             vararg = []
         if getattr(node, 'kwonlyargs', None):
             kwonlyargs = [self.visit(arg) for arg in node.kwonlyargs[:len(node.kwonlyargs) - len(node.kw_defaults)]]
-            kwdefs = ["%s=%s" % (self.visit(arg), self.visit(default) for (arg, default) in zip(node.kwonlyargs[-len(node.defaults):], node.defaults)]
+            kwdefs = ["%s=%s" % (self.visit(arg), self.visit(default)) for (arg, default) in zip(node.kwonlyargs[-len(node.defaults):], node.defaults)]
         else:
             kwonlyargs = []
+            kwdefs = []
         if node.kwarg:
             kwarg = ["**" + self.visit(node.kwarg)]
         else:
