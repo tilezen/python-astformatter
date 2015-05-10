@@ -226,7 +226,7 @@ class ASTFormatter(ast.NodeVisitor):
         return (" %s " % (self.visit(node.op),)).join([self.__parens(operand, node.op) for operand in node.values])
 
     def visit_Bytes(self, node):
-        return repr(node.bytes)
+        return repr(node.s)
 
     def visit_Call(self, node):
         args = [self.visit(arg) for arg in node.args]
