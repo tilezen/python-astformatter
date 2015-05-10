@@ -467,11 +467,11 @@ class ASTFormatter(ast.NodeVisitor):
         supers = []
         if node.bases is not None:
             supers.extend([self.visit(base) for base in node.bases])
-        if node.keywords is not None:
+        if getattr(node, 'keywords', None) is not None:
             supers.extend([self.visit(kw) for kw in node.keywords])
-        if node.starargs is not None:
+        if getattr(node, 'starargs', None) is not None:
             supers.append("*" + self.visit(node.starargs))
-        if node.kwargs is not None:
+        if getattr(node, 'kwargs', None) is not None:
             supers.append("**" + self.visit(node.kwargs))
         if len(supers):
             supers = "(%s)" % (", ".join(supers))
