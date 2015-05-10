@@ -13,7 +13,7 @@ Feature: Generate proper Python code
     Examples:
         | source input                                          | output snippet                                            |
         | def foo(x): pass                                      | def foo(x):\n    pass                                     |
-        | class foo(object): pass                               | class foo(object):                                        |
+        | class foo(object): pass                               | class foo(object):\n    pass                              |
         | return x                                              | return x                                                  |
         | del foo[0]                                            | del foo[0]                                                |
         | foo = x                                               | foo = x                                                   |
@@ -134,8 +134,8 @@ Feature: Generate proper Python code
         | exec("foo",x,y)                                       | exec('foo', x, y)                                         |
         | b"foo"                                                | b'foo'                                                    |
         | *foo = bar                                            | *foo = bar                                                |
-        | class foo(bar=baz): pass                              | class foo(bar=baz): pass                                  |
-        | nonlocal foo,bar                                      | nonlocal foo, bar                                         |
+        | class foo(bar=baz): pass                              | class foo(bar=baz):\n    pass                             |
+        | nonlocal foo,bar                                      | nonlocal foo,bar                                          |
 
     @v2.6 @v2.7 @v3.4
     Scenario Outline: Operator precedence should be taken into account
