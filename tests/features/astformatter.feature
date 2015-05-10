@@ -4,7 +4,8 @@ Feature: Generate proper Python code
     I want the ASTFormatter class to be able to generate proper
     Python code for any given AST tree.
 
-    Scenario Outline: Basic AST structures should work.
+    @v2.6 @v2.7 @v3.4
+    Scenario Outline: AST structures common to 2.x and 3.x should work.
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
          then the output should include "<output snippet>".
@@ -17,20 +18,17 @@ Feature: Generate proper Python code
         | del foo[0]                                            | del foo[0]                                                |
         | foo = x                                               | foo = x                                                   |
         | foo += y                                              | foo += y                                                  |
-        | print >> foo, x,                                      | print >> foo, x,                                          |
         | for target in (1,2,3):\n  pass\nelse:\n  pass         | for target in (1, 2, 3):\n    pass\nelse:\n    pass       |
         | while foo:\n  pass\nelse:\n  pass                     | while foo:\n    pass\nelse:\n    pass                     |
         | if foo:\n  pass\nelif foo:\n  pass\nelse:\n  pass     | if foo:\n    pass\nelif foo:\n    pass\nelse:\n    pass   |
         | with foo as x:\n  pass                                | with foo as x:\n    pass                                  |
-        | raise foo,x                                           | raise foo,x                                               |
-        | try:\n  pass\nexcept foo,x:\n  pass\nelse:\n  pass    | try:\n    pass\nexcept foo,x:\n    pass\nelse:\n    pass  |
+        | raise foo(x)                                          | raise foo(x)                                              |
         | try:\n  pass\nfinally:\n  pass                        | try:\n    pass\nfinally:\n    pass                        |
         | assert foo,x                                          | assert foo,x                                              |
         | import foo,bar as x                                   | import foo\nimport bar as x                               |
         | from foo import bar as x                              | from foo import bar as x                                  |
         | from foo import *                                     | from foo import *                                         |
         | from .foo import x                                    | from .foo import x                                        |
-        | exec "foo" in x,y                                     | exec 'foo' in x, y                                        |
         | global foo, x                                         | global foo,x                                              |
         | foo                                                   | foo                                                       |
         | pass                                                  | pass                                                      |
@@ -64,7 +62,6 @@ Feature: Generate proper Python code
         | y > x                                                 | y > x                                                     |
         | x == y                                                | x == y                                                    |
         | x != y                                                | x != y                                                    |
-        | x <> y                                                | x != y                                                    |
         | x <= y                                                | x <= y                                                    |
         | x >= y                                                | x >= y                                                    |
         | x is y                                                | x is y                                                    |
@@ -72,7 +69,6 @@ Feature: Generate proper Python code
         | x in y                                                | x in y                                                    |
         | x not in y                                            | x not in y                                                |
         | foo(x, y=1, *z, **q)                                  | foo(x, y=1, *z, **q)                                      |
-        | `foo`                                                 | `foo`                                                     |
         | 123                                                   | 123                                                       |
         | foo = "foo"                                           | foo = 'foo'                                               |
         | foo = 'foo'                                           | foo = 'foo'                                               |
@@ -86,6 +82,43 @@ Feature: Generate proper Python code
         | [x,y,z]                                               | [x, y, z]                                                 |
         | (x,y,z)                                               | (x, y, z)                                                 |
 
+    @v2.6 @v2.7
+    Scenario Outline: AST structures in 2.6+ should work.
+        Given I have parsed an AST tree from "<source input>",
+         when I transform the AST tree to source,
+         then the output should include "<output snippet>".
+
+    Examples:
+        | source input                                          | output snippet                                            |
+        | print >> foo, x,                                      | print >> foo, x,                                          |
+        | raise foo,x                                           | raise foo,x                                               |
+        | try:\n  pass\nexcept foo,x:\n  pass\nelse:\n  pass    | try:\n    pass\nexcept foo,x:\n    pass\nelse:\n    pass  |
+        | exec "foo" in x,y                                     | exec 'foo' in x, y                                        |
+        | x <> y                                                | x != y                                                    |
+        | `foo`                                                 | `foo`                                                     |
+
+    @v2.7
+    Scenario Outline: AST structures in 2.7+ should work.
+        Given I have parsed an AST tree from "<source input>",
+         when I transform the AST tree to source,
+         then the output should include "<output snippet>".
+
+    Examples:
+        | source input                                          | output snippet                                            |
+        | with foo as x,bar as y:\n  pass                       | with foo as x,bar as y:\n    pass                         |
+
+    @v3.4
+    Scenario Outline: AST structures in 3.4+ should work.
+        Given I have parsed an AST tree from "<source input>",
+         when I transform the AST tree to source,
+         then the output should include "<output snippet>".
+
+    Examples:
+        | source input                                          | output snippet                                            |
+        | try:\n  pass\nexcept foo as x:\n  pass\nelse:\n  pass | try:\n    pass\nexcept foo as x:\n    pass\nelse:\n    pass |
+        | exec("foo",x,y)                                       | exec('foo',x,y)                                           |
+
+    @v2.6 @v2.7 @v3.4
     Scenario Outline: Operator precedence should be taken into account
         Given I have parsed an AST tree from "<source input>",
          when I transform the AST tree to source,
