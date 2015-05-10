@@ -3,8 +3,9 @@ language: python
 python:
   - "2.6"
   - "2.7"
+  - "3.4"
 # command to install dependencies
-install: pip install argparse importlib behave
+install: pip install `case ${TRAVIS_PYTHON_VERSION} in 2*) echo argparse importlib; esac` behave
 # command to test
 script: behave
 
