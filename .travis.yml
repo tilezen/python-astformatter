@@ -8,8 +8,3 @@ python:
 install: pip install `case ${TRAVIS_PYTHON_VERSION} in 2*) echo argparse importlib; esac` behave
 # command to test
 script: behave
-
-notifications:
-  email:
-    recipients:
-      - darkfoxprime@gmail.com
