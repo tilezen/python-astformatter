@@ -171,7 +171,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "+"
 
     def visit_alias(self, node):
-        if node.asname is None:
+        if getattr(node, 'asname', None) is None:
             return node.name
         else:
             return "%s as %s" % (node.name, node.asname)
@@ -180,14 +180,14 @@ class ASTFormatter(ast.NodeVisitor):
         return "and"
 
     def visit_arg(self, node):
-        if node.annotation:
+        if getattr(node, 'annotation', None):
           return "%s: %s" % (node.arg, self.visit(node.annotation))
         return node.arg
 
     def visit_arguments(self, node):
         args = [self.visit(arg) for arg in node.args[:len(node.args) - len(node.defaults)]]
         defargs = ["%s=%s" % (self.visit(arg), self.visit(default)) for (arg, default) in zip(node.args[-len(node.defaults):], node.defaults)]
-        if node.vararg:
+        if getattr(node, 'vararg', None):
             vararg = ["*" + self.visit(node.vararg)]
         elif getattr(node, 'kwonlyargs', None):
             vararg = ["*"]
@@ -199,7 +199,7 @@ class ASTFormatter(ast.NodeVisitor):
         else:
             kwonlyargs = []
             kwdefs = []
-        if node.kwarg:
+        if getattr(node, 'kwarg', None):
             kwarg = ["**" + self.visit(node.kwarg)]
         else:
             kwarg = []
@@ -229,11 +229,11 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_Call(self, node):
         args = [self.visit(arg) for arg in node.args]
         keywords = [self.visit(keyword) for keyword in node.keywords]
-        if node.starargs:
+        if nodegetattr(, 'starargs', None):
             starargs = ["*%s" % (self.visit(node.starargs),)]
         else:
             starargs = []
-        if node.kwargs:
+        if getattr(node, 'kwargs', None):
             kwargs = ["**%s" % (self.visit(node.kwargs),)]
         else:
             kwargs = []
@@ -250,7 +250,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "{%s}" % (", ".join(["%s:%s" % (self.visit(key), self.visit(value)) for (key, value) in zip(node.keys, node.values)]),)
 
     def visit_DictComp(self, node):
-        if node.generators:
+        if getattr(node, 'generators', None):
             return "{%s:%s %s}" % (self.visit(node.key), self.visit(node.value)," ".join(self.visit(generator) for generator in node.generators),)
         return "{%s:%s}" % (self.visit(node.key), self.visit(node.value))
 
@@ -291,7 +291,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "//"
 
     def visit_GeneratorExp(self, node):
-        if node.generators:
+        if getattr(node, 'generators', None):
             return "(%s %s)" % (self.visit(node.elt), " ".join(self.visit(generator) for generator in node.generators),)
         return "(%s)" % (self.visit(node.elt),)
 
@@ -329,7 +329,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "[%s]" % (", ".join([self.visit(elt) for elt in node.elts]),)
 
     def visit_ListComp(self, node):
-        if node.generators:
+        if getattr(node, 'generators', None):
             return "[%s %s]" % (self.visit(node.elt), " ".join(self.visit(generator) for generator in node.generators),)
         return "[%s]" % (self.visit(node.elt),)
 
@@ -382,20 +382,20 @@ class ASTFormatter(ast.NodeVisitor):
         return "{%s}" % (", ".join(["%s" % (self.visit(elt),) for elt in node.elts]),)
 
     def visit_SetComp(self, node):
-        if node.generators:
+        if getattr(node, 'generators', None):
             return "{%s %s}" % (self.visit(node.elt), " ".join(self.visit(generator) for generator in node.generators),)
         return "{%s}" % (self.visit(node.elt),)
 
     def visit_Slice(self, node):
-        if node.lower:
+        if getattr(node, 'lower', None):
             lower = self.visit(node.lower)
         else:
             lower = ""
-        if node.upper:
+        if getattr(node, 'upper', None):
             upper = self.visit(node.upper)
         else:
             upper = ""
-        if node.step:
+        if getattr(node, 'step', None):
             return ":".join([lower, upper, self.visit(node.step)])
         else:
             return ":".join([lower, upper])
@@ -427,13 +427,13 @@ class ASTFormatter(ast.NodeVisitor):
         return "%s %s" % (self.visit(node.op), self.visit(node.operand))
 
     def visit_withitem(self, node):
-        if node.optional_vars is None:
+        if getattr(node, 'optional_vars', None) is None:
             return self.visit(node.context_expr)
         else:
             return "%s as %s" % (self.visit(node.context_expr), self.visit(node.optional_vars),)
 
     def visit_Yield(self, node):
-        if node.value:
+        if getattr(node, 'value', None):
             return "yield %s" % (self.visit(node.value),)
         return "yield"
 
@@ -445,7 +445,7 @@ class ASTFormatter(ast.NodeVisitor):
     # of strings, all terminated with a `\n` newline.
 
     def visit_Assert(self, node):
-        if node.msg is None:
+        if getattr(node, 'msg', None) is None:
             msg = ""
         else:
             msg = "," + self.visit(node.msg)
@@ -463,7 +463,7 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_ClassDef(self, node):
         decorators = [self.visit(dec) for dec in node.decorator_list]
         supers = []
-        if node.bases is not None:
+        if getattr(node, 'bases', None) is not None:
             supers.extend([self.visit(base) for base in node.bases])
         if getattr(node, 'keywords', None) is not None:
             supers.extend([self.visit(kw) for kw in node.keywords])
@@ -489,22 +489,22 @@ class ASTFormatter(ast.NodeVisitor):
         def visit_ExceptHandler(self, node):
             if not node.type:
                 return ["except:\n"] + self.__process_body(node.body, "    ")
-            if node.name:
+            if getattr(node, 'name', None):
                 return ["except %s,%s:\n" % (self.visit(node.type), self.visit(node.name))] + self.__process_body(node.body, "    ")
             return ["except %s:\n" % (self.visit(node.type),)] + self.__process_body(node.body, "    ")
     else:
         def visit_ExceptHandler(self, node):
             if not node.type:
                 return ["except:\n"] + self.__process_body(node.body, "    ")
-            if node.name:
+            if getattr(node, 'name', None):
                 return ["except %s as %s:\n" % (self.visit(node.type), node.name)] + self.__process_body(node.body, "    ")
             return ["except %s:\n" % (self.visit(node.type),)] + self.__process_body(node.body, "    ")
 
     def visit_Exec(self, node):
         inglobals, inlocals = "", ""
-        if node.globals is not None:
+        if getattr(node, 'globals', None) is not None:
             inglobals = " in %s" % (self.visit(node.globals),)
-            if node.locals is not None:
+            if getattr(node, 'locals', None) is not None:
                 inlocals = ", %s" % (self.visit(node.locals),)
         return "exec %s%s%s\n" % (self.visit(node.body), inglobals, inlocals)
 
@@ -514,7 +514,7 @@ class ASTFormatter(ast.NodeVisitor):
         return [ self.visit(node.value) + '\n' ]
 
     def visit_For(self, node):
-        if node.orelse is None or len(node.orelse) == 0:
+        if getattr(node, 'orelse', None) is None or len(node.orelse) == 0:
             orelse = []
         else:
             orelse = ["else:\n"] + self.__process_body(node.orelse, "    ")
@@ -536,7 +536,7 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_If(self, node):
         content = ["if %s:\n" % (self.visit(node.test),)] + self.__process_body(node.body, "    ")
-        if node.orelse is not None and len(node.orelse) > 0:
+        if getattr(node, 'orelse', None) is not None and len(node.orelse) > 0:
             if isinstance(node.orelse[0], ast.If):
                 orelse = self.__process_body(node.orelse, "")
                 orelse[0] = "el" + orelse[0]
@@ -561,11 +561,11 @@ class ASTFormatter(ast.NodeVisitor):
         return "pass\n"
 
     def visit_Print(self, node):
-        if node.dest is None:
+        if getattr(node, 'dest', None) is None:
             dest = ""
         else:
             dest = ">> %s, " % (self.visit(node.dest),)
-        if node.nl:
+        if getattr(node, 'nl', None):
             nl = ""
         else:
             nl = ","
@@ -580,7 +580,7 @@ class ASTFormatter(ast.NodeVisitor):
             params = (node.type, node.inst, node.tback)
         elif getattr(node, 'inst', None) is not None:
             params = (node.type, node.inst)
-        elif node.type is not None:
+        elif getattr(node, 'type', None) is not None:
             params = (node.type,)
         else:
             params = ""
@@ -589,7 +589,7 @@ class ASTFormatter(ast.NodeVisitor):
         return "raise%s\n" % (params,)
 
     def visit_Return(self, node):
-        if node.value is not None:
+        if getattr(node, 'value', None) is not None:
             return "return %s\n" % (self.visit(node.value),)
         return "return\n"
 
@@ -611,7 +611,7 @@ class ASTFormatter(ast.NodeVisitor):
     visit_TryFinally = visit_Try
 
     def visit_While(self, node):
-        if node.orelse is None or len(node.orelse) == 0:
+        if getattr(node, 'orelse', None) is None or len(node.orelse) == 0:
             orelse = []
         else:
             orelse = ["else:\n"] + self.__process_body(node.orelse, "    ")
@@ -625,7 +625,7 @@ class ASTFormatter(ast.NodeVisitor):
         if getattr(node, 'items',None) is not None:
             asvars = ", ".join([self.visit(item) for item in node.items])
         else:
-            if node.optional_vars is None:
+            if getattr(node, 'optional_vars', None) is None:
                 asvars = self.visit(node.context_expr)
             else:
                 asvars = "%s as %s" % (self.visit(node.context_expr), self.visit(node.optional_vars),)
