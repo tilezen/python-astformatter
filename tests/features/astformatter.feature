@@ -81,6 +81,9 @@ Feature: Generate proper Python code
         | foo[x:y:z]                                            | foo[x:y:z]                                                |
         | [x,y,z]                                               | [x, y, z]                                                 |
         | (x,y,z)                                               | (x, y, z)                                                 |
+        | None                                                  | None                                                      |
+        | True                                                  | True                                                      |
+        | False                                                 | False                                                     |
 
     @v2.6 @v2.7
     Scenario Outline: AST structures in 2.6+ should work.
@@ -96,6 +99,18 @@ Feature: Generate proper Python code
         | exec "foo" in x,y                                     | exec 'foo' in x, y                                        |
         | x <> y                                                | x != y                                                    |
         | `foo`                                                 | `foo`                                                     |
+
+    @v2.7 @v3.4
+    Scenario Outline: AST structures in 2.7+ and 3.4+ should work.
+        Given I have parsed an AST tree from "<source input>",
+         when I transform the AST tree to source,
+         then the output should include "<output snippet>".
+
+    Examples:
+        | source input                                          | output snippet                                            |
+        | {"first", 2, 'third', 4}                              | {'first', 2, 'third', 4}                                  |
+        | {x for x in foo}                                      | {x for x in foo}                                          |
+        | {k:v for (k,v) in foo}                                | {k:v for (k, v) in foo}                                   |
 
     @v2.7
     Scenario Outline: AST structures in 2.7+ should work.
@@ -117,6 +132,10 @@ Feature: Generate proper Python code
         | source input                                          | output snippet                                            |
         | try:\n  pass\nexcept foo as x:\n  pass\nelse:\n  pass | try:\n    pass\nexcept foo as x:\n    pass\nelse:\n    pass |
         | exec("foo",x,y)                                       | exec('foo', x, y)                                         |
+        | b"foo"                                                | b'foo'                                                    |
+        | *foo = bar                                            | *foo = bar                                                |
+        | class foo(bar=baz): pass                              | class foo(bar=baz): pass                                  |
+        | nonlocal foo,bar                                      | nonlocal foo, bar                                         |
 
     @v2.6 @v2.7 @v3.4
     Scenario Outline: Operator precedence should be taken into account
