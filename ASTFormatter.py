@@ -139,7 +139,7 @@ class ASTFormatter(ast.NodeVisitor):
     # _precedence maps node types to a precedence number; higher values
     # mean higher precedence.  For example, ast.Mult and ast.Div will
     # have higher precedence values thatn ast.Add and ast.Sub.
-    _precedence = dict([(j, i) for i in xrange(len(__precedence_list)) for j in __precedence_list[i]]);
+    _precedence = dict([(j, i) for i in range(len(__precedence_list)) for j in __precedence_list[i]]);
 
     # the __parens method accepts an operand and the operator which is
     # operating on the operand.  if the operand's type has a lower
