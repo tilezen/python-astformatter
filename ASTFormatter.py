@@ -320,7 +320,10 @@ class ASTFormatter(ast.NodeVisitor):
         return "is not"
 
     def visit_keyword(self, node):
-        return "%s=%s" % (node.arg, self.visit(node.value))
+        if getattr(node, 'arg', None):
+            return "%s=%s" % (node.arg, self.visit(node.value))
+        else:
+            return "**%s" % (self.visit(node.value),)
 
     def visit_Lambda(self, node):
         return "lambda %s: %s" % (self.visit(node.args)[1:-1], self.visit(node.body))
