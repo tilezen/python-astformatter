@@ -404,6 +404,12 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_UnaryOp(self, node):
         return "%s %s" % (self.visit(node.op), self.visit(node.operand))
 
+    def visit_withitem(self, node):
+        if node.optional_vars is None:
+            return self.visit(node.context_expr)
+        else:
+            return "%s as %s" % (self.visit(node.context_expr), self.visit(node.optional_vars),)
+
     def visit_Yield(self, node):
         if node.value:
             return "yield %s" % (self.visit(node.value),)
