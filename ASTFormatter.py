@@ -41,6 +41,9 @@ __all__ = ('ASTFormatter',)
 
 __version__ = '0.3.0'
 
+import sys
+# for sys.version
+
 ########################################################################
 # The ASTFormatter class walks an AST and produces properly formatted
 # python code for that AST.
@@ -130,7 +133,7 @@ class ASTFormatter(ast.NodeVisitor):
         (ast.UAdd, ast.USub, ast.Invert,),
         (ast.Pow,),
         (ast.Subscript, ast.Slice, ast.Call, ast.Attribute,),
-        (ast.Tuple, ast.List, ast.Dict, ast.Repr,),
+        (ast.Tuple, ast.List, ast.Dict,) + (((sys.version[0] < 3) and (ast.Repr,)) or ()) ,
     )
     
     # _precedence maps node types to a precedence number; higher values
