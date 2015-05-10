@@ -167,30 +167,42 @@ class ASTFormatter(ast.NodeVisitor):
     ####################################################################
     # expression methods - these return a single string with no newline
 
+    def visit_Add(self, node):
+        return "+"
+
     def visit_alias(self, node):
         if node.asname is None:
             return node.name
         else:
             return "%s as %s" % (node.name, node.asname)
 
-    def visit_Add(self, node):
-        return "+"
-
     def visit_And(self, node):
         return "and"
 
+    def visit_arg(self, node):
+        if node.annotation:
+          return "%s: %s" % (node.arg, self.visit(node.annotation))
+        return node.arg
+
     def visit_arguments(self, node):
-        args = ["%s" % (self.visit(arg),) for arg in node.args[:len(node.args) - len(node.defaults)]]
+        args = [self.visit(arg) for arg in node.args[:len(node.args) - len(node.defaults)]]
         defargs = ["%s=%s" % (self.visit(arg), self.visit(default)) for (arg, default) in zip(node.args[-len(node.defaults):], node.defaults)]
         if node.vararg:
             vararg = ["*" + self.visit(node.vararg)]
+        elif getattr(node, 'kwonlyargs', None):
+            vararg = ["*"]
         else:
             vararg = []
+        if getattr(node, 'kwonlyargs', None):
+            kwonlyargs = [self.visit(arg) for arg in node.kwonlyargs[:len(node.kwonlyargs) - len(node.kw_defaults)]]
+            kwdefs = ["%s=%s" % (self.visit(arg), self.visit(default) for (arg, default) in zip(node.kwonlyargs[-len(node.defaults):], node.defaults)]
+        else:
+            kwonlyargs = []
         if node.kwarg:
             kwarg = ["**" + self.visit(node.kwarg)]
         else:
             kwarg = []
-        return "(%s)" % (",".join(args + defargs + vararg + kwarg),)
+        return "(%s)" % (",".join(args + defargs + vararg + kwonlyargs + kwdefs + kwarg),)
 
     def visit_Attribute(self, node):
         return "%s.%s" % (self.__parens(node.value, node), node.attr)
