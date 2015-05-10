@@ -105,7 +105,7 @@ Feature: Generate proper Python code
 
     Examples:
         | source input                                          | output snippet                                            |
-        | with foo as x,bar as y:\n  pass                       | with foo as x,bar as y:\n    pass                         |
+        | with foo as x,bar as y:\n  pass                       | with foo as x, bar as y:\n    pass                        |
 
     @v3.4
     Scenario Outline: AST structures in 3.4+ should work.
@@ -116,7 +116,7 @@ Feature: Generate proper Python code
     Examples:
         | source input                                          | output snippet                                            |
         | try:\n  pass\nexcept foo as x:\n  pass\nelse:\n  pass | try:\n    pass\nexcept foo as x:\n    pass\nelse:\n    pass |
-        | exec("foo",x,y)                                       | exec('foo',x,y)                                           |
+        | exec("foo",x,y)                                       | exec('foo', x, y)                                         |
 
     @v2.6 @v2.7 @v3.4
     Scenario Outline: Operator precedence should be taken into account

@@ -452,12 +452,20 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_Delete(self, node):
         return "del %s\n" % (",".join([self.visit(target) for target in node.targets]),)
 
-    def visit_ExceptHandler(self, node):
-        if not node.type:
-            return ["except:\n"] + self.__process_body(node.body, "    ")
-        if node.name:
-            return ["except %s,%s:\n" % (self.visit(node.type), self.visit(node.name))] + self.__process_body(node.body, "    ")
-        return ["except %s:\n" % (self.visit(node.type),)] + self.__process_body(node.body, "    ")
+    if sys.version_info[0] == 2:
+        def visit_ExceptHandler(self, node):
+            if not node.type:
+                return ["except:\n"] + self.__process_body(node.body, "    ")
+            if node.name:
+                return ["except %s,%s:\n" % (self.visit(node.type), self.visit(node.name))] + self.__process_body(node.body, "    ")
+            return ["except %s:\n" % (self.visit(node.type),)] + self.__process_body(node.body, "    ")
+    else:
+        def visit_ExceptHandler(self, node):
+            if not node.type:
+                return ["except:\n"] + self.__process_body(node.body, "    ")
+            if node.name:
+                return ["except %s as %s:\n" % (self.visit(node.type), node.name)] + self.__process_body(node.body, "    ")
+            return ["except %s:\n" % (self.visit(node.type),)] + self.__process_body(node.body, "    ")
 
     def visit_Exec(self, node):
         inglobals, inlocals = "", ""
@@ -528,9 +536,13 @@ class ASTFormatter(ast.NodeVisitor):
         return "print %s%s%s\n" % (dest, ", ".join([self.visit(value) for value in node.values]), nl)
 
     def visit_Raise(self, node):
-        if node.tback is not None:
+        if getattr(node, 'clause', None) is not None:
+            return "raise %s from %s" % (self.visit(node.exc), self.visit(node.clause))
+        elif getattr(node, 'exc', None) is not None:
+            return "raise %s" % (self.visit(node.exc),)
+        elif getattr(node, 'tback', None) is not None:
             params = (node.type, node.inst, node.tback)
-        elif node.inst is not None:
+        elif getattr(node, 'inst', None) is not None:
             params = (node.type, node.inst)
         elif node.type is not None:
             params = (node.type,)
