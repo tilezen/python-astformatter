@@ -229,7 +229,7 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_Call(self, node):
         args = [self.visit(arg) for arg in node.args]
         keywords = [self.visit(keyword) for keyword in node.keywords]
-        if nodegetattr(, 'starargs', None):
+        if getattr(node, 'starargs', None):
             starargs = ["*%s" % (self.visit(node.starargs),)]
         else:
             starargs = []
