@@ -23,7 +23,9 @@ Bugs
 
 - Need to make the statement visitor methods consistent about returning a list of strings; most still just return a string.
 
-- Not tested with Python 3.0 at all.
+- Code modified to work with 3.x needs cleanup
+
+- not tested against 3.x structures that do not exist in 2.x
 
 Copyright
 ---------
