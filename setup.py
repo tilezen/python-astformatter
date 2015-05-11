@@ -6,9 +6,13 @@ from setuptools import setup
 from codecs import open
 from os import path
 
-import ASTFormatter
+from astformatter import ASTFormatter
 
-long_description = ASTFormatter.__doc__.strip('\n')
+long_description = getattr(ASTFormatter, '__doc__', "").lstrip().rstrip('\n').split('\n')
+if len(long_description) > 1:
+    indent = len(long_description[1]) - len(long_description[1].lstrip())
+    long_description[1:] = [desc[indent:] for desc in long_description[1:]]
+long_description = '\n'.join(long_description).rstrip('\n')
 
 open('README.rst', 'w').write(long_description + '\n')
 
@@ -27,13 +31,13 @@ setup(
         'Intended Audience :: Developers' ,
         'Topic :: Software Development :: Libraries :: Python Modules' ,
         'License :: OSI Approved :: ISC License (ISCL)' ,
-        'Programming Language :: Python :: 2' ,
         'Programming Language :: Python :: 2.6' ,
         'Programming Language :: Python :: 2.7' ,
+        'Programming Language :: Python :: 3.4' ,
     ] ,
     keywords = 'AST, source code formatter' ,
-    py_modules = ['ASTFormatter'] ,
-    # packages = [] ,
+    # py_modules = ['ASTFormatter'] ,
+    packages = [ 'astformatter' ] ,
     install_requires = [] ,
     package_data = {} ,
     data_files = [] ,

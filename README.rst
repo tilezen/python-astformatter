@@ -8,7 +8,7 @@ Example Usage
 
 ::
 
-    from ASTFormatter import ASTFormatter
+    from astformatter import ASTFormatter
     import ast
     
     tree = ast.parse(open('modulefile.py'), 'modulefile.py', mode='exec')
