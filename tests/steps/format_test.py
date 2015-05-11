@@ -1,5 +1,5 @@
 from behave import *
-from ASTFormatter import ASTFormatter
+from astformatter import ASTFormatter
 import ast
 import sys
 
