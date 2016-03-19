@@ -39,6 +39,12 @@ class ASTFormatter(ast.NodeVisitor):
 
     - Code modified to work with 3.x needs cleanup
 
+    Latest Changes
+    --------------
+
+    version 0.6.2
+      Add missing newlines for two uses of ``raise``
+
     Copyright
     ---------
 
