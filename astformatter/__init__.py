@@ -577,9 +577,9 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_Raise(self, node):
         if getattr(node, 'clause', None) is not None:
-            return "raise %s from %s" % (self.visit(node.exc), self.visit(node.clause))
+            return "raise %s from %s\n" % (self.visit(node.exc), self.visit(node.clause))
         elif getattr(node, 'exc', None) is not None:
-            return "raise %s" % (self.visit(node.exc),)
+            return "raise %s\n" % (self.visit(node.exc),)
         elif getattr(node, 'tback', None) is not None:
             params = (node.type, node.inst, node.tback)
         elif getattr(node, 'inst', None) is not None:
