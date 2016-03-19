@@ -42,13 +42,13 @@ class ASTFormatter(ast.NodeVisitor):
     Copyright
     ---------
 
-    Copyright |copy| 2015 by Johnson Earls.  Some rights reserved.  See the license_ for details.
+    Copyright |copy| 2015-2016 by Johnson Earls.  Some rights reserved.  See the license_ for details.
 
     .. _license: https://raw.githubusercontent.com/darkfoxprime/python-astformatter/master/LICENSE
     .. |copy| unicode:: 0xA9 .. copyright sign
     '''
 
-    __version__ = '0.6.1'
+    __version__ = '0.6.2'
 
     def __init__(self):
         """Return a new ASTFormatter object."""
