@@ -10,7 +10,7 @@ Example Usage
 
     from astformatter import ASTFormatter
     import ast
-    
+
     tree = ast.parse(open('modulefile.py'), 'modulefile.py', mode='exec')
     src  = ASTFormatter().format(tree, mode='exec')
 
@@ -24,6 +24,12 @@ Bugs
 - Need to make the statement visitor methods consistent about returning a list of strings; most still just return a string.
 
 - Code modified to work with 3.x needs cleanup
+
+Latest Changes
+--------------
+
+version 0.6.2
+  Add missing newlines for two uses of ``raise``
 
 Copyright
 ---------
