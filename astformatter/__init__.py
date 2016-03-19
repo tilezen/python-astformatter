@@ -24,7 +24,7 @@ class ASTFormatter(ast.NodeVisitor):
 
         from astformatter import ASTFormatter
         import ast
-        
+
         tree = ast.parse(open('modulefile.py'), 'modulefile.py', mode='exec')
         src  = ASTFormatter().format(tree, mode='exec')
 
@@ -64,7 +64,7 @@ class ASTFormatter(ast.NodeVisitor):
         If mode is 'exec', treat the tree as if it were rooted at a
         module; otherwise, for 'eval', treat it as if it were rooted
         at an expr node.
-        """ 
+        """
         if not isinstance(AST, ast.AST):
             raise TypeError("ASTFormatter.format() expected AST got " + type(AST).__name__)
         if mode == 'exec':
@@ -117,7 +117,7 @@ class ASTFormatter(ast.NodeVisitor):
     # higher precedence operators.
 
     # the __precedence_list is a list of tuples of node types, in order
-    # lowest priority to highest.  It is used to build the _precedence map.    
+    # lowest priority to highest.  It is used to build the _precedence map.
     __precedence_list = (
         (ast.Lambda,),
         (ast.IfExp,),
@@ -136,7 +136,7 @@ class ASTFormatter(ast.NodeVisitor):
         (ast.Subscript, ast.Slice, ast.Call, ast.Attribute,),
         (ast.Tuple, ast.List, ast.Dict,) + (((sys.version_info[0] < 3) and (ast.Repr,)) or ()) ,
     )
-    
+
     # _precedence maps node types to a precedence number; higher values
     # mean higher precedence.  For example, ast.Mult and ast.Div will
     # have higher precedence values thatn ast.Add and ast.Sub.
@@ -278,7 +278,7 @@ class ASTFormatter(ast.NodeVisitor):
         else:
             docstring = ['"""%s"""\n' % (docstring[0],)]
         return docstring
-        
+
     def visit_Ellipsis(self, node):
         return "..."
 
@@ -551,9 +551,9 @@ class ASTFormatter(ast.NodeVisitor):
 
     def visit_Import(self, node):
         return [ "import %s\n" % (self.visit(name),) for name in node.names ]
-    
+
     def visit_ImportFrom(self, node):
-        return "from %s%s import %s\n" % ("." * node.level, node.module, ", ".join([self.visit(name) for name in node.names]),) 
+        return "from %s%s import %s\n" % ("." * node.level, node.module, ", ".join([self.visit(name) for name in node.names]),)
 
     def visit_Module(self, node):
         return self.__process_body(node.body)
