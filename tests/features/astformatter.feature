@@ -165,3 +165,5 @@ Feature: Generate proper Python code
         | x + y * z                                             | x + y * z                                                 |
         | (x + y) * z                                           | (x + y) * z                                               |
         | x + (y * z)                                           | x + y * z                                                 |
+        | not (x and y)                                         | not (x and y)                                             |
+        | not x and y                                           | not x and y                                               |
