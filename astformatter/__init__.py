@@ -486,7 +486,14 @@ class ASTFormatter(ast.NodeVisitor):
         else:
             supers = ""
         classdef = ["class %s%s:\n" % (node.name, supers)]
-        classbody = self.__process_body(node.body, "    ")
+        try:
+            if node.docstring is not None:
+                body = [ast.Expr(ast.Str(node.docstring))] + node.body
+            else:
+                body = node.body
+        except AttributeError:
+            body = node.body
+        classbody = self.__process_body(body, "    ")
         return decorators + classdef + classbody
 
     def visit_Continue(self, node):
@@ -523,6 +530,9 @@ class ASTFormatter(ast.NodeVisitor):
             return self.visit_DocStr(node.value)
         return [ self.visit(node.value) + '\n' ]
 
+    def visit_Expression(self, node):
+        return self.visit(node.body)
+
     def visit_For(self, node):
         if getattr(node, 'orelse', None) is None or len(node.orelse) == 0:
             orelse = []
@@ -538,7 +548,14 @@ class ASTFormatter(ast.NodeVisitor):
     def visit_FunctionDef(self, node):
         decorators = [self.visit(dec) for dec in node.decorator_list]
         funcdef = ["def %s%s:\n" % (node.name, self.visit(node.args))]
-        funcbody = self.__process_body(node.body, "    ")
+        try:
+            if node.docstring is not None:
+                body = [ast.Expr(ast.Str(node.docstring))] + node.body
+            else:
+                body = node.body
+        except AttributeError:
+            body = node.body
+        funcbody = self.__process_body(body, "    ")
         return decorators + funcdef + funcbody
 
     def visit_Global(self, node):
@@ -562,7 +579,14 @@ class ASTFormatter(ast.NodeVisitor):
         return "from %s%s import %s\n" % ("." * node.level, node.module, ", ".join([self.visit(name) for name in node.names]),)
 
     def visit_Module(self, node):
-        return self.__process_body(node.body)
+        try:
+            if node.docstring is not None:
+                body = [ast.Expr(ast.Str(node.docstring))] + node.body
+            else:
+                body = node.body
+        except AttributeError:
+            body = node.body
+        return self.__process_body(body)
 
     def visit_Nonlocal(self, node):
         return "nonlocal %s\n" % (",".join(node.names),)
